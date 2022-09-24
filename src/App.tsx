@@ -8,7 +8,6 @@ import companyHasSpecialties from './utils/companyHasSpecialties';
 
 const RootContainer = styled.div`
   padding: 50px 20px;
-  margin: 20px;
   background: beige;
   color: black;
   display: flex;
