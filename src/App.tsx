@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import styled from '@emotion/styled'
 import getAllCompanies from './network/getAllCompanies';
 import { Company } from './types';
@@ -10,27 +10,43 @@ const RootContainer = styled.div`
   background: beige;
   color: black;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
 `
 
 const ListContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: stretch;
+`
 
+const SearchBar = styled.input`
+  padding: 10px;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 30px;
+  max-width: 300px;
 `
 
 function App() {
 
   const [allCompanies, setAllCompanies] = useState<Company[] | undefined>(undefined)
   const [error, setError] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(function fetchAllCompaniesOnRender() {
     getAllCompanies()
       .then(setAllCompanies)
       .catch(err => setError)
   }, [])
+
+  const handleInputChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value)
+  }, [])
+
+  const filteredResults = allCompanies?.filter(company => company.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   if (typeof allCompanies == "undefined") {
     return <RootContainer>
@@ -46,8 +62,14 @@ function App() {
 
   return (
     <RootContainer>
+      <SearchBar
+        type="search"
+        value={searchTerm}
+        onChange={handleInputChange}
+        placeholder="Search..."
+      />
       <ListContainer>
-        {allCompanies.map(company => (
+        {filteredResults?.map(company => (
           <CompanyListItemView company={company} key={company.id} />
         ))}
       </ListContainer>
