@@ -9,35 +9,35 @@
   {
     "id": 2,
     "name": "Litter Disposal Ltd.",
-    "logo": "http://placekitten.com/200/200",
+    "logo": "http://placekitten.com/200/201",
     "specialties": ["EXCAVATION"],
     "city": "Strasbourg"
   },
   {
     "id": 3,
     "name": "Sparkles & Co.",
-    "logo": "http://placekitten.com/200/200",
+    "logo": "http://placekitten.com/200/202",
     "specialties": ["ELECTRICAL", "PLUMBING"],
     "city": "Siena"
   },
   {
     "id": 4,
     "name": "Laser Pointers Incorporated",
-    "logo": "http://placekitten.com/200/200",
+    "logo": "http://placekitten.com/200/203",
     "specialties": ["ELECTRICAL"],
     "city": "Bayeux"
   },
   {
     "id": 5,
     "name": "Napping & Beyond",
-    "logo": "http://placekitten.com/200/200",
+    "logo": "http://placekitten.com/200/199",
     "specialties": ["EXCAVATION", "ELECTRICAL"],
     "city": "Ekaterinoburg"
   },
   {
     "id": 6,
     "name": "Katzen Gmbh",
-    "logo": "http://placekitten.com/200/200",
+    "logo": "http://placekitten.com/200/198",
     "specialties": ["PLUMBING", "EXCAVATION"],
     "city": "Berlin"
   }
