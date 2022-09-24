@@ -40,7 +40,7 @@ export default function CompanyListItemView({
         <Name>{company.name}</Name>
         <Location>{company.city}</Location>
         <PillContainer>
-          {company.specialties.map(specialty => <SpecialtyPill name={specialty} key={specialty} />)}
+          {company.specialties.sort().map(specialty => <SpecialtyPill name={specialty} key={specialty} />)}
         </PillContainer>
       </TextDetails>
     </Container>

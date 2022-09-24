@@ -7,16 +7,26 @@ const Pill = styled.div`
   border-radius: 5px;
   background: darkgray;
   color: white;
-  margin: 3px;
+  margin: 3px 6px;
+  cursor: pointer;
 `
 
 type Props = {
-  name: string
+  name: string;
+  showCheckbox?: boolean;
+  isChecked?: boolean;
+  onClick?: (name: string) => void
 }
 export default function SpecialtyPill({
-  name
+  name,
+  onClick,
+  showCheckbox,
+  isChecked
 }: Props) {
   return (
-    <Pill>{name}</Pill>
+    <Pill onClick={onClick ? () => onClick(name) : undefined}>
+      {name}
+      {showCheckbox && <input type="checkbox" checked={isChecked || false} readOnly />}
+    </Pill>
   )
 }
