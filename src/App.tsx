@@ -31,7 +31,9 @@ const SearchBar = styled.input`
   max-width: 300px;
 `
 
-const SpecialtyContainer = styled.div``
+const SpecialtyContainer = styled.div`
+  margin-bottom: 10px;
+`
 
 function App() {
 

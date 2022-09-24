@@ -3,11 +3,11 @@ import styled from '@emotion/styled'
 
 const Pill = styled.div`
   display: inline-block;
-  padding: 3px;
+  padding: 3px 6px;
   border-radius: 5px;
   background: darkgray;
   color: white;
-  margin: 3px 6px;
+  margin-right: 10px;
   cursor: pointer;
 `
 

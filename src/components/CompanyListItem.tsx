@@ -10,6 +10,7 @@ const Container = styled.article`
   border: 1px solid black;
   padding: 5px;
   margin: 5px 0;
+  background: white;
 `
 
 const Logo = styled.img`
