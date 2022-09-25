@@ -79,10 +79,13 @@ function App() {
         // Check if the values we started the search with still match the current filters
         if (query === currentFilters.current[0] && isEqual(selectedSpecialties, currentFilters.current[1])) {
           setAllCompanies(res)
+          setIsUpdateLoading(false)
         }
       })
-      .catch(setError)
-      .finally(() => setIsUpdateLoading(false))
+      .catch((err: Error) => {
+        setIsUpdateLoading(false)
+        setError(err.message)
+      })
   }, [])
 
   const debouncedSearch = useCallback(debounce((query: string) => {
@@ -104,21 +107,13 @@ function App() {
 
   const handleSpecialtyChange = useCallback((specialty: string) => {
     setSelectedSpecialties(previousValue => {
-      if (previousValue.includes(specialty)) {
-        const newValue = previousValue.filter(s => s !== specialty)
-        if (useBackendSearch) {
-          search(searchTerm, newValue)
-        }
-        currentFilters.current = [currentFilters.current[0], newValue]
-        return newValue
-      } else {
-        const newValue = [...previousValue, specialty]
-        if (useBackendSearch) {
-          search(searchTerm, newValue)
-        }
-        currentFilters.current = [currentFilters.current[0], newValue]
-        return [...previousValue, specialty]
+      const newValue = previousValue.includes(specialty) ? previousValue.filter(s => s !== specialty) : [...previousValue, specialty]
+      if (useBackendSearch) {
+        search(searchTerm, newValue)
       }
+      currentFilters.current = [currentFilters.current[0], newValue]
+      return newValue
+
     })
   }, [useBackendSearch, search, searchTerm])
 
