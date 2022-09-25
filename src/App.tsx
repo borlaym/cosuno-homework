@@ -5,6 +5,8 @@ import { Company } from './types';
 import CompanyListItemView from './components/CompanyListItem';
 import SpecialtyPill from './components/SpecialtyPill';
 import companyHasSpecialties from './utils/companyHasSpecialties';
+import { debounce } from 'lodash'
+import getFilteredCompanies from './network/getFilteredCompanies';
 
 const RootContainer = styled.div`
   padding: 50px 20px;
@@ -37,42 +39,74 @@ const SpecialtyContainer = styled.div`
 
 function App() {
 
+  const [useBackendSearch, setUseBackendSearch] = useState(false)
   const [allCompanies, setAllCompanies] = useState<Company[] | undefined>(undefined)
   const [error, setError] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([])
 
-  useEffect(function fetchAllCompaniesOnRender() {
+  useEffect(function resetOnRenderAndBackendChange() {
+    setSearchTerm("")
+    setSelectedSpecialties([])
     getAllCompanies()
       .then(setAllCompanies)
       .catch((err: Error) => setError(err.message))
+  }, [useBackendSearch])
+
+  const search = useCallback((query: string, selectedSpecialties: string[]) => {
+    getFilteredCompanies(query, selectedSpecialties)
+      .then(setAllCompanies)
+      .catch(setError)
   }, [])
+
+  const debouncedSearch = useCallback(debounce((query: string) => {
+    search(query, selectedSpecialties)
+  }, 500), [selectedSpecialties, search])
 
   const handleInputChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value)
+    const newValue = event.target.value
+    setSearchTerm(newValue)
+    if (useBackendSearch) {
+      debouncedSearch(newValue)
+    }
+  }, [debouncedSearch, useBackendSearch])
+
+  const handleUseBackendChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setUseBackendSearch(event.target.checked)
   }, [])
 
-  const allSpecialties: string[] = allCompanies?.flatMap(c => c.specialties).reduce((acc: string[], item: string) => {
+
+
+  const handleSpecialtyChange = useCallback((specialty: string) => {
+    setSelectedSpecialties(previousValue => {
+      if (previousValue.includes(specialty)) {
+        const newValue = previousValue.filter(s => s !== specialty)
+        if (useBackendSearch) {
+          search(searchTerm, newValue)
+        }
+        return newValue
+      } else {
+        const newValue = [...previousValue, specialty]
+        if (useBackendSearch) {
+          search(searchTerm, newValue)
+        }
+        return [...previousValue, specialty]
+      }
+    })
+  }, [useBackendSearch, search, searchTerm])
+
+  const filteredResults = useBackendSearch ? allCompanies : allCompanies?.filter(company => company.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(company => selectedSpecialties.length === 0 || companyHasSpecialties(company, selectedSpecialties))
+
+  const sortedResults = filteredResults?.sort((a, b) => a.name < b.name ? -1 : 1)
+
+  const allSpecialties: string[] = sortedResults?.flatMap(c => c.specialties).reduce((acc: string[], item: string) => {
     if (!acc.includes(item)) {
       return [...acc, item]
     } else {
       return acc
     }
   }, []) || []
-
-  const handleSpecialtyChange = useCallback((specialty: string) => {
-    setSelectedSpecialties(previousValue => {
-      if (previousValue.includes(specialty)) {
-        return previousValue.filter(s => s !== specialty)
-      } else {
-        return [...previousValue, specialty]
-      }
-    })
-  }, [])
-
-  const filteredResults = allCompanies?.filter(company => company.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter(company => selectedSpecialties.length === 0 || companyHasSpecialties(company, selectedSpecialties))
-    .sort((a, b) => a.name < b.name ? -1 : 1)
 
   if (typeof allCompanies == "undefined") {
     return <RootContainer>
@@ -88,6 +122,7 @@ function App() {
 
   return (
     <RootContainer>
+      <p>Use backend search <input type="checkbox" checked={useBackendSearch} onChange={handleUseBackendChange} /></p>
       <SearchBar
         type="search"
         value={searchTerm}
@@ -100,7 +135,7 @@ function App() {
         ))}
       </SpecialtyContainer>
       <ListContainer>
-        {filteredResults?.map(company => (
+        {sortedResults?.map(company => (
           <CompanyListItemView company={company} key={company.id} />
         ))}
       </ListContainer>

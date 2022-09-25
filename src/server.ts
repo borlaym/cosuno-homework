@@ -69,6 +69,7 @@ app.get('/api/all', (req, res) => {
           return nameMatched
         })()
 
+        // Delay sending the response to simulate a slower network / overhead of fetching from db
         setTimeout(() => {
           res.send({
             data: specialtyMatched
