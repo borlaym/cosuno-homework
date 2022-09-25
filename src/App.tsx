@@ -1,11 +1,11 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled'
 import getAllCompanies from './network/getAllCompanies';
 import { Company } from './types';
 import CompanyListItemView from './components/CompanyListItem';
 import SpecialtyPill from './components/SpecialtyPill';
 import companyHasSpecialties from './utils/companyHasSpecialties';
-import { debounce } from 'lodash'
+import { debounce, isEqual } from 'lodash'
 import getFilteredCompanies from './network/getFilteredCompanies';
 
 const RootContainer = styled.div`
@@ -24,13 +24,29 @@ const ListContainer = styled.div`
   align-items: stretch;
 `
 
+const SearchContainer = styled.div<{ isLoading: boolean }>`
+  width: 100%;
+  margin-bottom: 30px;
+  max-width: 300px;
+  position: relative;
+
+  ::after {
+    content: 'Loading...';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    display: ${props => props.isLoading ? 'block' : 'none'};
+    padding: 3px;
+  }
+`
+
 const SearchBar = styled.input`
   padding: 10px;
   border-radius: 4px;
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: 30px;
-  max-width: 300px;
 `
 
 const SpecialtyContainer = styled.div`
@@ -44,19 +60,29 @@ function App() {
   const [error, setError] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([])
+  const [isUpdateLoading, setIsUpdateLoading] = useState(false)
+  const currentFilters = useRef<[string, string[]]>(["", []]) // Needed to check when a result arrives if it still matches the current filter
 
   useEffect(function resetOnRenderAndBackendChange() {
     setSearchTerm("")
     setSelectedSpecialties([])
+    currentFilters.current = ["", []]
     getAllCompanies()
       .then(setAllCompanies)
       .catch((err: Error) => setError(err.message))
   }, [useBackendSearch])
 
   const search = useCallback((query: string, selectedSpecialties: string[]) => {
+    setIsUpdateLoading(true)
     getFilteredCompanies(query, selectedSpecialties)
-      .then(setAllCompanies)
+      .then(res => {
+        // Check if the values we started the search with still match the current filters
+        if (query === currentFilters.current[0] && isEqual(selectedSpecialties, currentFilters.current[1])) {
+          setAllCompanies(res)
+        }
+      })
       .catch(setError)
+      .finally(() => setIsUpdateLoading(false))
   }, [])
 
   const debouncedSearch = useCallback(debounce((query: string) => {
@@ -66,6 +92,7 @@ function App() {
   const handleInputChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value
     setSearchTerm(newValue)
+    currentFilters.current = [newValue, currentFilters.current[1]]
     if (useBackendSearch) {
       debouncedSearch(newValue)
     }
@@ -75,8 +102,6 @@ function App() {
     setUseBackendSearch(event.target.checked)
   }, [])
 
-
-
   const handleSpecialtyChange = useCallback((specialty: string) => {
     setSelectedSpecialties(previousValue => {
       if (previousValue.includes(specialty)) {
@@ -84,12 +109,14 @@ function App() {
         if (useBackendSearch) {
           search(searchTerm, newValue)
         }
+        currentFilters.current = [currentFilters.current[0], newValue]
         return newValue
       } else {
         const newValue = [...previousValue, specialty]
         if (useBackendSearch) {
           search(searchTerm, newValue)
         }
+        currentFilters.current = [currentFilters.current[0], newValue]
         return [...previousValue, specialty]
       }
     })
@@ -106,7 +133,7 @@ function App() {
     } else {
       return acc
     }
-  }, []) || []
+  }, []).sort() || []
 
   if (typeof allCompanies == "undefined") {
     return <RootContainer>
@@ -123,12 +150,15 @@ function App() {
   return (
     <RootContainer>
       <p>Use backend search <input type="checkbox" checked={useBackendSearch} onChange={handleUseBackendChange} /></p>
-      <SearchBar
-        type="search"
-        value={searchTerm}
-        onChange={handleInputChange}
-        placeholder="Search..."
-      />
+      <SearchContainer isLoading={isUpdateLoading}>
+        <SearchBar
+          type="search"
+          value={searchTerm}
+          onChange={handleInputChange}
+          placeholder="Search..."
+        />
+      </SearchContainer>
+
       <SpecialtyContainer>
         {allSpecialties.map(specialty => (
           <SpecialtyPill key={specialty} name={specialty} showCheckbox isChecked={selectedSpecialties.includes(specialty)} onClick={handleSpecialtyChange} />
